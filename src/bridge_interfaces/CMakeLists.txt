@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(flightstack_server)
+project(bridge_interfaces)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,30 +7,12 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
-find_package(bridge_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
-# Create executables
-add_executable(flightstack_server_dummy src/flightstack_server_dummy.cpp)
-ament_target_dependencies(flightstack_server_dummy
-  rclcpp
-  px4_msgs
-  bridge_interfaces
-)
-
-add_executable(flightstack_server_node src/flightstack_server_node.cpp)
-ament_target_dependencies(flightstack_server_node
-  rclcpp
-  px4_msgs
-  bridge_interfaces
-)
-
-# Install executables
-install(TARGETS
-  flightstack_server_dummy
-  flightstack_server_node
-  DESTINATION lib/${PROJECT_NAME}
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "srv/BridgeStep.srv"
+  DEPENDENCIES px4_msgs
 )
 
 if(BUILD_TESTING)

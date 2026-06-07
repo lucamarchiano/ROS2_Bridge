@@ -5,13 +5,13 @@
 #include "rosgraph_msgs/msg/clock.hpp"
 #include "px4_msgs/msg/vehicle_odometry.hpp"
 #include "px4_msgs/msg/actuator_motors.hpp"
-#include "flightstack_server/srv/compute_control.hpp"
+#include "bridge_interfaces/srv/bridge_step.hpp"
 
 class SimulationBridgeServer : public rclcpp::Node
 {
 public:
     SimulationBridgeServer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
-        : Node("control_server", options)
+        : Node("flightstack_server", options)
     {
         // Allocate distinct, mutually exclusive callback groups to prevent self-deadlocking
         callback_group_service_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -32,8 +32,8 @@ public:
 
         // Host the service endpoint that PyChrono calls every physics step.
         // For ROS 2 Jazzy, we pass rclcpp::ServicesQoS() and our callback group directly as positional arguments.
-        service_server_ = this->create_service<flightstack_server::srv::ComputeControl>(
-            "compute_control",
+        service_server_ = this->create_service<bridge_interfaces::srv::BridgeStep>(
+            "bridge_step",
             std::bind(&SimulationBridgeServer::handle_simulation_step, this, std::placeholders::_1, std::placeholders::_2),
             rclcpp::ServicesQoS(),
             callback_group_service_);
@@ -43,8 +43,8 @@ public:
 
 private:
     void handle_simulation_step(
-        const std::shared_ptr<flightstack_server::srv::ComputeControl::Request> request,
-        std::shared_ptr<flightstack_server::srv::ComputeControl::Response> response)
+        const std::shared_ptr<bridge_interfaces::srv::BridgeStep::Request> request,
+        std::shared_ptr<bridge_interfaces::srv::BridgeStep::Response> response)
     {
         uint64_t current_sim_time_us = request->vehicle_odometry.timestamp;
 
@@ -97,7 +97,7 @@ private:
     rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr pub_clock_;
     rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr pub_odometry_;
     rclcpp::Subscription<px4_msgs::msg::ActuatorMotors>::SharedPtr sub_motors_;
-    rclcpp::Service<flightstack_server::srv::ComputeControl>::SharedPtr service_server_;
+    rclcpp::Service<bridge_interfaces::srv::BridgeStep>::SharedPtr service_server_;
 
     rclcpp::CallbackGroup::SharedPtr callback_group_service_;
     rclcpp::CallbackGroup::SharedPtr callback_group_sub_;

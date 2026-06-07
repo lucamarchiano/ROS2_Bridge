@@ -8,7 +8,7 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rosgraph_msgs.msg import Clock
-from flightstack_server.srv import ComputeControl
+from bridge_interfaces.srv import BridgeStep
 from px4_msgs.msg import VehicleOdometry
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -32,12 +32,12 @@ class ROS2ControlNode(Node):
         
         # Create service client
         self.client = self.create_client(
-            ComputeControl, "compute_control", callback_group=self.client_cb_group
+            BridgeStep, "bridge_step", callback_group=self.client_cb_group
         )
         
         if not self.client.wait_for_service(timeout_sec=10.0):
-            raise ControlServiceException("compute_control service not available")
-        logger.info("✓ compute_control service ready")
+            raise ControlServiceException("bridge_step service not available")
+        logger.info("✓ bridge_step service ready")
 
     def publish_clock(self, sim_time_sec: float):
         clock_msg = Clock()
@@ -99,7 +99,7 @@ class ROS2Bridge:
             raise RuntimeError("Must call Initialize() first")
         
         # Best Practice: Call async to hand over the execution token to the background thread
-        future = self.node.client.call_async(ComputeControl.Request(vehicle_odometry=self._odometry))
+        future = self.node.client.call_async(BridgeStep.Request(vehicle_odometry=self._odometry))
         
         # Synchronous Thread Barrier: Freeze the main loop here until response wakes it up
         response_received = threading.Event()

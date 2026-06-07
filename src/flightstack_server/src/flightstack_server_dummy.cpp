@@ -1,27 +1,27 @@
 #include <cmath>      // For std::nanf
 #include <rclcpp/rclcpp.hpp>
 #include "px4_msgs/msg/actuator_motors.hpp"
-#include "flightstack_server/srv/compute_control.hpp"
+#include "bridge_interfaces/srv/bridge_step.hpp"
 
 
 class MinimalServer : public rclcpp::Node
 {
 public:
     MinimalServer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
-        : Node("control_server", options)
+        : Node("flightstack_server", options)
     {
-        service_ = this->create_service<flightstack_server::srv::ComputeControl>(
-            "compute_control",
-            std::bind(&MinimalServer::handle_control_request, this, std::placeholders::_1, std::placeholders::_2)
+        service_ = this->create_service<bridge_interfaces::srv::BridgeStep>(
+            "bridge_step",
+            std::bind(&MinimalServer::handle_request, this, std::placeholders::_1, std::placeholders::_2)
         );
-        RCLCPP_INFO(this->get_logger(), "ComputeControl service server is ready (C++)");
+        RCLCPP_INFO(this->get_logger(), "BridgeStep service server is ready (C++)");
     }
 
 
 private:
-    void handle_control_request(
-        const std::shared_ptr<flightstack_server::srv::ComputeControl::Request> request,
-        std::shared_ptr<flightstack_server::srv::ComputeControl::Response> response)
+    void handle_request(
+        const std::shared_ptr<bridge_interfaces::srv::BridgeStep::Request> request,
+        std::shared_ptr<bridge_interfaces::srv::BridgeStep::Response> response)
     {
         // Check A: Extract the time packaged inside the message payload from Python
         double payload_time_sec = request->vehicle_odometry.timestamp / 1000000.0;
@@ -32,7 +32,7 @@ private:
         RCLCPP_INFO(this->get_logger(), "[C++ Server] Internal Node Clock Time: %.4f s", node_clock_sec);
         
         // LOG: Request arrived
-        RCLCPP_INFO(this->get_logger(), "→ Received ComputeControl request");
+        RCLCPP_INFO(this->get_logger(), "→ Received BridgeStep request");
         
         // LOG: Request data
         RCLCPP_INFO(this->get_logger(), 
@@ -61,7 +61,7 @@ private:
         RCLCPP_INFO(this->get_logger(), "← Sending response with 8 motors @ 0.2f");
     }
 
-    rclcpp::Service<flightstack_server::srv::ComputeControl>::SharedPtr service_;
+    rclcpp::Service<bridge_interfaces::srv::BridgeStep>::SharedPtr service_;
 };
 
 
