@@ -7,7 +7,7 @@ import threading
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
-from rosgraph_msgs.msg import Clock
+# from rosgraph_msgs.msg import Clock
 from bridge_interfaces.srv import BridgeStep
 from px4_msgs.msg import VehicleOdometry
 
@@ -21,15 +21,8 @@ class ROS2ControlNode(Node):
     def __init__(self):
         super().__init__('pychrono_simulator')
         
-        # Best Practice: Use mutually exclusive callback groups to run tasks concurrently
-        self.pub_cb_group = MutuallyExclusiveCallbackGroup()
         self.client_cb_group = MutuallyExclusiveCallbackGroup()
-        
-        # Create clock publisher
-        self.clock_pub = self.create_publisher(
-            Clock, '/clock', 10, callback_group=self.pub_cb_group
-        )
-        
+
         # Create service client
         self.client = self.create_client(
             BridgeStep, "bridge_step", callback_group=self.client_cb_group
@@ -38,14 +31,6 @@ class ROS2ControlNode(Node):
         if not self.client.wait_for_service(timeout_sec=10.0):
             raise ControlServiceException("bridge_step service not available")
         logger.info("✓ bridge_step service ready")
-
-    def publish_clock(self, sim_time_sec: float):
-        clock_msg = Clock()
-        seconds = int(sim_time_sec)
-        nanoseconds = int((sim_time_sec - seconds) * 1e9)
-        clock_msg.clock.sec = seconds
-        clock_msg.clock.nanosec = nanoseconds
-        self.clock_pub.publish(clock_msg)
     
 
 class ROS2Bridge:
@@ -84,11 +69,6 @@ class ROS2Bridge:
             self.executor.spin()
         except Exception as e:
             logger.error(f"Executor error: {e}")
-
-    def publish_sim_time(self, sim_time_sec: float):
-        """Publishes the current PyChrono simulation time to ROS2"""
-        if self.initialized:
-            self.node.publish_clock(sim_time_sec)
     
     def set_odometry_request(self, odometry: VehicleOdometry):
         self._odometry = odometry
