@@ -1,3 +1,4 @@
 px4_msgs/VehicleOdometry vehicle_odometry
 ---
 px4_msgs/ActuatorMotors actuator_motors
+string telemetry_json
