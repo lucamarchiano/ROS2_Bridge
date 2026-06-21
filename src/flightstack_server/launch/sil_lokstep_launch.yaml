@@ -1,0 +1,12 @@
+launch:
+  - node:
+      pkg: "flightstack"
+      exec: "flightstack"
+      name: "flightstack_main"
+      output: "screen"
+
+  - node:
+      pkg: "flightstack_server"
+      exec: "flightstack_server_node"
+      name: "flightstack_server"
+      output: "screen"

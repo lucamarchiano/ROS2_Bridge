@@ -67,14 +67,19 @@ private:
 
         // Block this service thread until the flightstack's timer runs the math and publishes motors back
         std::unique_lock<std::mutex> lock(mutex_);
-        bool finished_before_timeout = cv_.wait_for(lock, std::chrono::milliseconds(100), [this]() {
+
+        bool success = cv_.wait_for(lock, std::chrono::milliseconds(1000), [this]() {
             return motor_data_received_;
         });
-
-        if (finished_before_timeout) {
+        if (success) {
+            // FLIGHTSTACK REPLIED! But did it send NaNs?
+            if (std::isnan(latest_motor_msg_.control[0])) {
+                RCLCPP_ERROR(this->get_logger(), "t=%.3f | FlightStack actively replied with NaNs!", request->vehicle_odometry.timestamp / 1e6);
+            }
             response->actuator_motors = latest_motor_msg_;
         } else {
-            RCLCPP_WARN(this->get_logger(), "SIL Bridge Timeout! Flightstack missed the synchronization window.");
+            // FLIGHTSTACK MISSED THE FRAME!
+            RCLCPP_ERROR(this->get_logger(), "t=%.3f | Bridge Timeout! FlightStack did not reply.", request->vehicle_odometry.timestamp / 1e6);
             for (size_t i = 0; i < 12; ++i) {
                 response->actuator_motors.control[i] = std::nanf("");
             }
