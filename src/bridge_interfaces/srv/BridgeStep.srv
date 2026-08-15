@@ -1,3 +1,4 @@
 px4_msgs/VehicleOdometry vehicle_odometry
+float64 previous_step_rtt_ms
 ---
 px4_msgs/ActuatorMotors actuator_motors
