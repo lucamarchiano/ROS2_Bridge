@@ -43,6 +43,7 @@ class ROS2Bridge:
         self.clock_pub = None
         self._odometry = None
         self._request_start_time = 0.0
+        self._last_rtt_ms = 0.0
     
     def Initialize(self):
         if not rclpy.ok():
@@ -77,11 +78,12 @@ class ROS2Bridge:
     def get_control_response(self, timeout_sec: float = 15.0) -> np.ndarray:
         if not self.initialized:
             raise RuntimeError("Must call Initialize() first")
+    
+        future = self.node.client.call_async(BridgeStep.Request(
+            vehicle_odometry=self._odometry,
+            previous_step_rtt_ms=self._last_rtt_ms
+        ))
         
-        # Best Practice: Call async to hand over the execution token to the background thread
-        future = self.node.client.call_async(BridgeStep.Request(vehicle_odometry=self._odometry))
-        
-        # Synchronous Thread Barrier: Freeze the main loop here until response wakes it up
         response_received = threading.Event()
         
         def done_callback(_future):
@@ -99,6 +101,7 @@ class ROS2Bridge:
             
         request_to_control_ms = (time_module.perf_counter() - self._request_start_time) * 1000
         self.latency_history.append(request_to_control_ms)
+        self._last_rtt_ms = float(request_to_control_ms)
         
         return response.actuator_motors
     
