@@ -149,13 +149,7 @@ private:
             if (std::isnan(latest_motor_msg_.control[0])) {
                 RCLCPP_ERROR(this->get_logger(), "t=%.3f | FlightStack actively replied with NaNs!", request->vehicle_odometry.timestamp / 1e6);
             }
-            
-            if (pychrono_rtt_ms > 0.0) {
-                RCLCPP_INFO(this->get_logger(), 
-                            "PyChrono RTT: %.3f ms | C++ Compute: %.3f ms | Network Overhead: %.3f ms", 
-                            pychrono_rtt_ms, cpp_turnaround_ms, network_overhead_ms);
-            }
-
+        
             response->actuator_motors = latest_motor_msg_;
         } else {
             RCLCPP_ERROR(this->get_logger(), "t=%.3f | Bridge Timeout! FlightStack did not reply after %.3f ms.", request->vehicle_odometry.timestamp / 1e6, cpp_turnaround_ms);
